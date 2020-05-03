@@ -101,8 +101,6 @@ def state_search(start_state):
             if blocking < h_n and state not in explored_cur_state:
                 h_n = blocking
                 cur_state = state
-        
-        moving_set.clear()
         total_moves += 1
 
     return total_moves, total_states_explored
@@ -188,9 +186,17 @@ def blocking_heuristic(cur_state):
 def reverse(lst):
     return lst[::-1]
 
-rushhour(0,["--B---","--B---","XXB---","--AA--", "------","------"])
-#rushhour(0, ["--OPPP","--O--A","XXO--A","-CC--Q","-----Q","--RRRQ"])
-#rushhour(0, ["--OPPP","--O--A","XXO--A","---CCQ","-----Q","--RRRQ"])
+##simple
+#rushhour(0,["--B---","--B---","XXB---","--AA--", "------","------"])
 
-#rushhour(0, ["------", "------", "XX----", "AAB---","--B---","--B---"])
+##mediate
+#rushhour(0, ["--OPPP","--O--A","XXO--A","-CC--Q","-----Q","--RRRQ"])
+
+#rushhour(0, ["OOOP--","--AP--","XXAP--","Q-----", "QGGCCD","Q----D"])
+#rushhour(0,["-ABBO-","-ACDO-","XXCDO-","PJFGG-", "PJFH--","PIIH--"])
+#rushhour(0,["OOO--P","-----P","--AXXP","--ABCC", "D-EBFF","D-EQQQ"])
+
+##hardest
+#rushhour(0, ["MMMDEF","ANNDEF","A-XXEF","PPC---", "-BC-QQ", "-BRRSS"])
+
 
