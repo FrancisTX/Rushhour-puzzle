@@ -15,10 +15,16 @@ class Car:
 
 
 def rushhour(search_mode, start_state):
-    if search_mode == 0:
-        total_moves, total_states = state_search(start_state)
+    total_move, total_states, optimal_path = state_search(search_mode ,start_state)
 
-    print('Total moves: ', total_moves)
+    optimal_path.append(start_state)
+    optimal_path = reverse(optimal_path)
+    for path in optimal_path:
+        for single_line in path:
+            print(single_line)
+        print("\n")
+
+    print('Total moves: ', total_move)
     print('Total states explored: ', total_states)
    
 
@@ -51,59 +57,104 @@ def check_repeat_car(car_list,car_name):
     return False
 
 ##Implementing the blocking heuristic
-def state_search(start_state):
+def state_search(heuristic_method, start_state):
     total_moves = 0
     total_states_explored = 0
     cur_state = start_state
-    path = []
     moving_set = set()
+    dic_set = set()
     explored_cur_state = set()
+    gn_dic = {}
+    path_track = {}
+    gn = 0
+
     while len(cur_state) > 0:
+        gn += 1
         explored_cur_state.add(tuple(cur_state))
         cur_state = list(cur_state)
 
-        for element in cur_state:
-            print(element)
-        print("\n")
+        ##for element in cur_state:
+        ##    print(element)
+        ##print("\n")
 
         if cur_state[2][4] == "X" and cur_state[2][5] == "X":
-            path.append (cur_state)
             break
 
-        path.append(cur_state)
         car_list = cars(cur_state)
 
         new_states = try_move_right(cur_state, car_list)
-        #new_states.difference_update(explored_cur_state)
+        new_states.difference_update(explored_cur_state)
+        dic_set = dic_set.union(new_states)
         moving_set = moving_set.union(new_states)
 
         new_states = try_move_left(cur_state, car_list)
-        #new_states.difference_update(explored_cur_state)
+        new_states.difference_update(explored_cur_state)
+        dic_set = dic_set.union(new_states)
         moving_set = moving_set.union(new_states)
 
         new_states = try_move_up(cur_state, car_list)
-        #new_states.difference_update(explored_cur_state)
+        new_states.difference_update(explored_cur_state)
+        dic_set = dic_set.union(new_states)
         moving_set = moving_set.union(new_states)
 
         new_states = try_move_down(cur_state, car_list)
-        #new_states.difference_update(explored_cur_state)
+        new_states.difference_update(explored_cur_state)
+        dic_set = dic_set.union(new_states)
         moving_set = moving_set.union(new_states)
 
-        total_states_explored += len(moving_set)
+        total_states_explored += 1
+        path_track[str(cur_state)] = list(dic_set)
+
+        for state in moving_set:
+            if state not in gn_dic:
+                gn_dic[state] = gn
         
         next_state = []
         if len(moving_set) == 0:
             print("FALL")
             break
-        h_n = 7
-        for state in moving_set:
-            blocking = blocking_heuristic(state)
-            if blocking < h_n and state not in explored_cur_state:
-                h_n = blocking
-                cur_state = state
-        total_moves += 1
 
-    return total_moves, total_states_explored
+        if heuristic_method == 0:
+            moving_list = list(moving_set)
+            gn_value = gn_dic[moving_list[0]]
+            min_fn = blocking_heuristic(moving_list[0]) + gn_value
+            del_state = moving_list[0]
+
+            for state in moving_set:
+                fn = gn_dic[state] + blocking_heuristic(state)
+                if fn < min_fn and state not in explored_cur_state:
+                    min_fn = fn
+                    del_state = state
+
+        if heuristic_method == 1:
+            moving_list = list(moving_set)
+            gn_value = gn_dic[moving_list[0]]
+            min_fn = blocking_distance_heuristic(moving_list[0]) + gn_value
+            del_state = moving_list[0]
+
+            for state in moving_set:
+                fn = gn_dic[state] + blocking_distance_heuristic(state)
+                if fn < min_fn and state not in explored_cur_state:
+                    min_fn = fn
+                    del_state = state
+
+            
+        gn_dic.pop(tuple(del_state))
+        moving_set.remove(del_state)
+        dic_set.clear()
+        cur_state = del_state
+
+    optimal_path = []
+    cur_state = str(cur_state)
+    while(cur_state != str(start_state)):
+        for parent, child_paths in path_track.items():  
+            for element in child_paths:
+                if str(list(element)) == cur_state:
+                    optimal_path.append(list(element))
+                    cur_state = parent
+                    total_moves += 1
+    
+    return total_moves, total_states_explored, optimal_path
     
 def try_move_right(cur_state, car_list):
     new_state_list = set()
@@ -180,8 +231,16 @@ def blocking_heuristic(cur_state):
             blocking_car += 1
     return blocking_car
 
+def blocking_distance_heuristic(cur_state):
+    blocking_car = 1
+    for i in range(len(cur_state[2])):
+        if cur_state[2][i] != "-" and cur_state[2][i] !=  "X":
+            blocking_car += 1
 
-
+    for i in range(len(cur_state[2])- 1, 0, -1):
+        if cur_state[2][i] !=  "X":
+            blocking_car += 1
+    return blocking_car
 
 def reverse(lst):
     return lst[::-1]
@@ -190,11 +249,11 @@ def reverse(lst):
 #rushhour(0,["--B---","--B---","XXB---","--AA--", "------","------"])
 
 ##mediate
-#rushhour(0, ["--OPPP","--O--A","XXO--A","-CC--Q","-----Q","--RRRQ"])
+rushhour(0, ["--OPPP","--O--A","XXO--A","-CC--Q","-----Q","--RRRQ"])
 
 #rushhour(0, ["OOOP--","--AP--","XXAP--","Q-----", "QGGCCD","Q----D"])
-#rushhour(0,["-ABBO-","-ACDO-","XXCDO-","PJFGG-", "PJFH--","PIIH--"])
-#rushhour(0,["OOO--P","-----P","--AXXP","--ABCC", "D-EBFF","D-EQQQ"])
+#rushhour(1,["-ABBO-","-ACDO-","XXCDO-","PJFGG-", "PJFH--","PIIH--"])
+#rushhour(1,["OOO--P","-----P","--AXXP","--ABCC", "D-EBFF","D-EQQQ"])
 
 ##hardest
 #rushhour(0, ["MMMDEF","ANNDEF","A-XXEF","PPC---", "-BC-QQ", "-BRRSS"])
